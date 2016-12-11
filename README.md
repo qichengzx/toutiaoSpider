@@ -11,6 +11,11 @@ $ //main.go后添加需要爬取的标签名
 $ go run main.go 街拍 摄影
 ```
 
+### SCREENSHOT
+
+![2016-12-11 19-31-51](https://cloud.githubusercontent.com/assets/1927478/21079839/4849bd16-bfd9-11e6-8bed-ea2517e11b8a.gif)
+
+
 ### TODO 
 
 > 并发爬取
