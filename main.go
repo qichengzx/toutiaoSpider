@@ -40,13 +40,13 @@ func main() {
 }
 
 func getByTag(tag string) {
-	i, offset := 1, 140
+	i, offset := 1, 0
 	for {
 		if hasmore {
 			log.Printf("标签: '%s'，第 '%d' 页, OFFSET: '%d' \n", tag, i, offset)
 			tmpUrl := fmt.Sprintf(host, tag, offset)
 			getResFromApi(tmpUrl)
-			offset += 20
+			offset += 30
 			i++
 
 			time.Sleep(500 * time.Millisecond)
@@ -83,20 +83,23 @@ func getResFromApi(url string) {
 }
 
 func getImgByPage(url string) {
-	doc, err := goquery.NewDocument(url)
-	if err != nil {
-		log.Fatal(err)
+	//部分请求结果中包含其他网站的链接，会导致下面的query出现问题
+	if strings.Contains(url, "toutiao.com") {
+		doc, err := goquery.NewDocument(url)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		title := doc.Find("#article-main .article-title").Text()
+		title = strings.Replace(title, "/", "", -1)
+		os.Mkdir(title, 0777)
+
+		doc.Find("#J_content .article-content img").Each(func(i int, s *goquery.Selection) {
+			src, _ := s.Attr("src")
+			log.Println(title, src)
+			getImgAndSave(src, title)
+		})
 	}
-
-	title := doc.Find("#article-main .article-title").Text()
-	title = strings.Replace(title, "/", "", -1)
-	os.Mkdir(title, 0777)
-
-	doc.Find("#J_content .article-content img").Each(func(i int, s *goquery.Selection) {
-		src, _ := s.Attr("src")
-		log.Println(title, src)
-		getImgAndSave(src+".jpg", title)
-	})
 }
 
 func getImgAndSave(url string, dirname string) {
@@ -105,17 +108,22 @@ func getImgAndSave(url string, dirname string) {
 	if len(path) > 1 {
 		name = path[len(path)-1]
 	}
-
+	
 	resp, err := http.Get(url)
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Fatal("请求失败", err)
+		return
+	}
+	
+	contents, err := ioutil.ReadAll(resp.Body)
 	defer func() {
 		if x := recover(); x != nil {
 			return
 		}
 	}()
-	defer resp.Body.Close()
-
-	contents, err := ioutil.ReadAll(resp.Body)
-	err = ioutil.WriteFile("./"+dirname+"/"+name, contents, 0644)
+	err = ioutil.WriteFile("./"+dirname+"/"+name+".jpg", contents, 0644)
 	if err != nil {
 		log.Fatal("写入文件失败", err)
 	}
