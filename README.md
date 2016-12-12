@@ -24,6 +24,8 @@ $ go run main.go 街拍 摄影
 
 > 错误处理
 
+> Windows 保存图片的目录格式
+
 ### 已知问题
 
 某些情况下会出现 unexpected EOF 错误导致退出

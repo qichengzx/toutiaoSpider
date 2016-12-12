@@ -40,7 +40,7 @@ func main() {
 }
 
 func getByTag(tag string) {
-	i, offset := 1, 0
+	i, offset := 1, 140
 	for {
 		if hasmore {
 			log.Printf("标签: '%s'，第 '%d' 页, OFFSET: '%d' \n", tag, i, offset)
@@ -89,6 +89,7 @@ func getImgByPage(url string) {
 	}
 
 	title := doc.Find("#article-main .article-title").Text()
+	title = strings.Replace(title, "/", "", -1)
 	os.Mkdir(title, 0777)
 
 	doc.Find("#J_content .article-content img").Each(func(i int, s *goquery.Selection) {
@@ -114,12 +115,6 @@ func getImgAndSave(url string, dirname string) {
 	defer resp.Body.Close()
 
 	contents, err := ioutil.ReadAll(resp.Body)
-	defer func() {
-		if x := recover(); x != nil {
-			return
-		}
-	}()
-	
 	err = ioutil.WriteFile("./"+dirname+"/"+name, contents, 0644)
 	if err != nil {
 		log.Fatal("写入文件失败", err)
