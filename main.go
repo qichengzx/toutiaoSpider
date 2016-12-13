@@ -29,17 +29,18 @@ type Img struct {
 var (
 	host    string = "http://www.toutiao.com/search_content/?format=json&keyword=%s&count=30&offset=%d"
 	hasmore bool   = true
+	tag     string
 )
 
 func main() {
-	for _, tag := range os.Args[1:] {
+	for _, tag = range os.Args[1:] {
 		hasmore = true
-		getByTag(tag)
+		getByTag()
 	}
 	log.Println("全部抓取完毕")
 }
 
-func getByTag(tag string) {
+func getByTag() {
 	i, offset := 1, 0
 	for {
 		if hasmore {
@@ -54,7 +55,7 @@ func getByTag(tag string) {
 			break
 		}
 	}
-	log.Printf("标签: '%s', 共 %v 页，爬取完毕\n", tag, i)
+	log.Printf("标签: '%s', 共 %v 页，爬取完毕\n", tag, i-1)
 }
 
 func getResFromApi(url string) {
@@ -92,7 +93,7 @@ func getImgByPage(url string) {
 
 		title := doc.Find("#article-main .article-title").Text()
 		title = strings.Replace(title, "/", "", -1)
-		os.Mkdir(title, 0777)
+		os.MkdirAll(tag+"/"+title, 0777)
 
 		doc.Find("#J_content .article-content img").Each(func(i int, s *goquery.Selection) {
 			src, _ := s.Attr("src")
@@ -108,7 +109,7 @@ func getImgAndSave(url string, dirname string) {
 	if len(path) > 1 {
 		name = path[len(path)-1]
 	}
-	
+
 	resp, err := http.Get(url)
 	defer resp.Body.Close()
 
@@ -116,14 +117,14 @@ func getImgAndSave(url string, dirname string) {
 		log.Fatal("请求失败", err)
 		return
 	}
-	
+
 	contents, err := ioutil.ReadAll(resp.Body)
 	defer func() {
 		if x := recover(); x != nil {
 			return
 		}
 	}()
-	err = ioutil.WriteFile("./"+dirname+"/"+name+".jpg", contents, 0644)
+	err = ioutil.WriteFile("./"+tag+"/"+dirname+"/"+name+".jpg", contents, 0644)
 	if err != nil {
 		log.Fatal("写入文件失败", err)
 	}
